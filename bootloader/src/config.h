@@ -13,6 +13,12 @@
 #define BL_COL_PIN 12
 #define BL_ROW_BANK GPIOB
 #define BL_ROW_PIN 13
+#elif defined(TARGET_SINGLEPIN)
+#define VIAL_KEYBOARD_UID {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+/* setup for judging single-pin */
+#define BOOTLOADER_USE_SINGLE_PIN 1
+#define BOOTLOADER_PIN_BANK GPIOB
+#define BOOTLOADER_PIN_NUMBER 12
 #elif defined(TARGET_VIAL_TEST)
 #define VIAL_KEYBOARD_UID {0x6F, 0xC5, 0xEE, 0x60, 0x90, 0x92, 0x53, 0xA4}
 /* setup for bluepill */

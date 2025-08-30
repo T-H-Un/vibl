@@ -57,14 +57,19 @@ void setInsecureFlag(void) {
 }
 
 int checkKbMatrix(void) {
-    /* output low on the row_pin */
+#if BOOTLOADER_USE_SINGLE_PIN
+    /* Checking if the Single-Pin key is pressed. */
+    if (!(BOOTLOADER_PIN_BANK->IDR & (1U << BOOTLOADER_PIN_NUMBER))) {
+        return 1; // When the key is judged as GND
+    }
+    return 0;
+
+#else
+    /* Checking if the COL-LOW key is pressed. */
     BL_ROW_BANK->BRR = (1U << BL_ROW_PIN);
-
-    /* delay for change to propagate */
     for (volatile int delay = 0; delay < 1000; ++delay) {}
-
-    /* read and check col_pin */
     return !(BL_COL_BANK->IDR & (1U << BL_COL_PIN));
+#endif
 }
 
 #define CR_INPUT_PU_PD      0x08
@@ -94,6 +99,12 @@ void setupGPIO(void) {
     /* Disable JTAG to release PB3, PB4, PA15 */
     AFIO->MAPR = AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
 
+#if BOOTLOADER_USE_SINGLE_PIN
+    /* Set BOOTLOADER_PIN as pullup input */
+    cr = *GPIO_CR(BOOTLOADER_PIN_BANK, BOOTLOADER_PIN_NUMBER) & crMask(BOOTLOADER_PIN_NUMBER);
+    *GPIO_CR(BOOTLOADER_PIN_BANK, BOOTLOADER_PIN_NUMBER) = cr | CR_INPUT_PU_PD << CR_SHITF(BOOTLOADER_PIN_NUMBER);
+    BOOTLOADER_PIN_BANK->BSRR = (1U << BOOTLOADER_PIN_NUMBER);
+#else
     /* Set col_pin as pullup input */
     cr = *GPIO_CR(BL_COL_BANK,BL_COL_PIN) & crMask(BL_COL_PIN);
     *GPIO_CR(BL_COL_BANK,BL_COL_PIN) = cr | CR_INPUT_PU_PD << CR_SHITF(BL_COL_PIN);
@@ -102,4 +113,5 @@ void setupGPIO(void) {
     /* Set row_pin as output */
     cr = *GPIO_CR(BL_ROW_BANK,BL_ROW_PIN) & crMask(BL_ROW_PIN);
     *GPIO_CR(BL_ROW_BANK,BL_ROW_PIN) = cr | CR_OUTPUT_PP << CR_SHITF(BL_ROW_PIN);
+#endif
 }
